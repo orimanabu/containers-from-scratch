@@ -1,3 +1,6 @@
+*.swp
+containers-from-scratch
+
 # Prerequisites
 *.d
 
