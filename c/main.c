@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/mount.h>
+#include <fcntl.h>
 
 #define STACK_SIZE 1024 * 1024
 #define ROOTFS "/home/ori/ubuntu-rootfs"
@@ -73,18 +74,6 @@ int into_userns(void *arg)
 
 	system("/usr/bin/id");
 
-	sprintf(map_path, "/proc/%d/gid_map", pid);
-	if ((gid_map_file = fopen(map_path, "w")) == NULL) {
-		perror("Failed to open /proc/self/gid_map");
-		return -1;
-	}
-	if (fwrite(gid_map, 1, strlen(gid_map), gid_map_file) != strlen(gid_map)) {
-		perror("Failed to write to /proc/self/gid_map");
-		fclose(gid_map_file);
-		return -1;
-	}
-	fclose(gid_map_file);
-
 	sprintf(map_path, "/proc/%d/uid_map", pid);
 	if ((uid_map_file = fopen(map_path, "w")) == NULL) {
 		perror("Failed to open /proc/self/uid_map");
@@ -96,6 +85,34 @@ int into_userns(void *arg)
 		return -1;
 	}
 	fclose(uid_map_file);
+
+	system("/usr/bin/id");
+
+	FILE * x;
+	//sprintf(map_path, "/proc/%d/setgroups", pid);
+	sprintf(map_path, "/proc/self/setgroups");
+	if ((x = fopen(map_path, "w")) == NULL) {
+		perror("failed");
+		return -1;
+	}
+	if (fwrite("deny", 1, strlen("deny"), x) != strlen("deny")) {
+		perror("failed");
+		fclose(x);
+		return -1;
+	}
+	fclose(x);
+
+	sprintf(map_path, "/proc/%d/gid_map", pid);
+	if ((gid_map_file = fopen(map_path, "w")) == NULL) {
+		perror("Failed to open /proc/self/gid_map");
+		return -1;
+	}
+	if (fwrite(gid_map, 1, strlen(gid_map), gid_map_file) != strlen(gid_map)) {
+		perror("Failed to write to /proc/self/gid_map");
+		fclose(gid_map_file);
+		return -1;
+	}
+	fclose(gid_map_file);
 
 	system("/usr/bin/id");
 
